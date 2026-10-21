@@ -1,0 +1,21 @@
+[
+  {
+    "respondent_id": "REALTIME-001",
+    "likert_scores": {
+      "q1_overload": 5,
+      "q2_invasion": 4,
+      "q3_complexity": 5
+    },
+    "essay": "Notifikasi tugas masuk tengah malam dan aplikasi lemot sekali bikin lelah dan pusing"
+  },
+  {
+    "respondent_id": "REALTIME-002",
+    "likert_scores": {
+      "q1_overload": 1,
+      "q2_invasion": 1,
+      "q3_complexity": 2
+    },
+    "essay": "Sistem sangat lancar, mudah dan cepat menyelesaikan semua urusan laporan kerja"
+  }
+]
+
