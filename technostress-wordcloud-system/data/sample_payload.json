@@ -1,21 +1,232 @@
-[
-  {
-    "respondent_id": "REALTIME-001",
-    "likert_scores": {
-      "q1_overload": 5,
-      "q2_invasion": 4,
-      "q3_complexity": 5
+{
+  "status": "success",
+  "status_code": 200,
+  "total_records": 25,
+  "data": [
+    {
+      "id": "RES-001",
+      "name": "Aditya Pratama",
+      "post_date": "2026-10-22 08:30:00",
+      "kalkulasi": 4.3,
+      "kategori": "Stress tinggi",
+      "essay_1": "Sistem sering error saat jam sibuk dan aplikasi lemot membuat saya sangat lelah dan pusing saat belajar",
+      "essay_2": "Notifikasi tugas masuk terus di malam hari bikin waktu istirahat tidur terganggu dan tidak tenang"
     },
-    "essay": "Notifikasi tugas masuk tengah malam dan aplikasi lemot sekali bikin lelah dan pusing"
-  },
-  {
-    "respondent_id": "REALTIME-002",
-    "likert_scores": {
-      "q1_overload": 1,
-      "q2_invasion": 1,
-      "q3_complexity": 2
+    {
+      "id": "RES-002",
+      "name": "Budi Santoso",
+      "post_date": "2026-10-22 08:35:00",
+      "kalkulasi": 1.3,
+      "kategori": "Stress rendah",
+      "essay_1": "Tidak ada kendala berarti, aplikasi pembelajaran berjalan lancar dan mudah digunakan",
+      "essay_2": "Fitur materi digital sangat membantu belajar mandiri di rumah jadi lebih cepat dan menyenangkan"
     },
-    "essay": "Sistem sangat lancar, mudah dan cepat menyelesaikan semua urusan laporan kerja"
-  }
-]
-
+    {
+      "id": "RES-003",
+      "name": "Citra Dewi",
+      "post_date": "2026-10-22 08:40:00",
+      "kalkulasi": 4.2,
+      "kategori": "Stress tinggi",
+      "essay_1": "Beban tugas numpuk tiada henti di aplikasi, kuota boros dan hp cepat panas membuat stres berat",
+      "essay_2": "Rasanya waktu luang habis terus di depan layar laptop, sangat lelah mental dan mata pusing"
+    },
+    {
+      "id": "RES-004",
+      "name": "Dika Prasetyo",
+      "post_date": "2026-10-22 08:45:00",
+      "kalkulasi": 1.7,
+      "kategori": "Stress rendah",
+      "essay_1": "Hanya kendala sinyal kadang lambat kalau cuaca buruk, selebihnya sistem cukup stabil",
+      "essay_2": "Aplikasi ini cukup praktis untuk mengumpulkan tugas harian dan berdiskusi dengan teman"
+    },
+    {
+      "id": "RES-005",
+      "name": "Eka Rahmawati",
+      "post_date": "2026-10-22 08:50:00",
+      "kalkulasi": 4.6,
+      "kategori": "Stress tinggi",
+      "essay_1": "Atasan dan guru sering kirim tugas lewat grup chat di hari libur dan malam hari tanpa batas waktu",
+      "essay_2": "Saya merasa sangat tertekan dan cemas karena seperti dipaksa harus selalu online memantau hp"
+    },
+    {
+      "id": "RES-006",
+      "name": "Farhan Maulana",
+      "post_date": "2026-10-22 08:55:00",
+      "kalkulasi": 1.4,
+      "kategori": "Stress rendah",
+      "essay_1": "Aplikasi sangat ringan dan jarang crash, panduan penggunaan awal juga sangat jelas",
+      "essay_2": "Proses belajar kelompok jadi lebih efisien dan koordinasi tugas berjalan sangat rapi"
+    },
+    {
+      "id": "RES-007",
+      "name": "Gita Savitri",
+      "post_date": "2026-10-22 09:00:00",
+      "kalkulasi": 4.1,
+      "kategori": "Stress tinggi",
+      "essay_1": "Banyak fitur baru di aplikasi yang membingungkan tanpa panduan jelas, sering gagal submit tugas",
+      "essay_2": "Sangat frustrasi dan emosi setiap kali sistem tiba-tiba error saat deadline ujian sudah dekat"
+    },
+    {
+      "id": "RES-008",
+      "name": "Hadi Wijaya",
+      "post_date": "2026-10-22 09:05:00",
+      "kalkulasi": 2.8,
+      "kategori": "Stress sedang",
+      "essay_1": "Kadang server sekolah lambat saat semua siswa login bersamaan di pagi hari",
+      "essay_2": "Pengalaman belajar cukup lumayan meskipun harus sabar menunggu loading materi terbuka"
+    },
+    {
+      "id": "RES-009",
+      "name": "Intan Permata",
+      "post_date": "2026-10-22 09:10:00",
+      "kalkulasi": 4.3,
+      "kategori": "Stress tinggi",
+      "essay_1": "Merasa tertinggal dan cemas tidak mampu memahami teknologi baru yang sering ganti-ganti aturan",
+      "essay_2": "Belajar terasa terbebani karena tuntutan serba cepat dan takut nilai tugas turun drastis"
+    },
+    {
+      "id": "RES-010",
+      "name": "Joko Susilo",
+      "post_date": "2026-10-22 09:15:00",
+      "kalkulasi": 1.2,
+      "kategori": "Stress rendah",
+      "essay_1": "Sistem pembelajaran daring ini sangat nyaman dan tidak pernah ada masalah teknis parah",
+      "essay_2": "Sangat terbantu dan senang karena jadwal pelajaran tersusun jelas dan fleksibel"
+    },
+    {
+      "id": "RES-011",
+      "name": "Kirana Larasati",
+      "post_date": "2026-10-22 09:20:00",
+      "kalkulasi": 4.4,
+      "kategori": "Stress tinggi",
+      "essay_1": "Notifikasi tugas dan pengumuman datang bertubi-tubi dari berbagai grup wa dan aplikasi sekolah",
+      "essay_2": "Pusing dan susah konsentrasi, kepala sakit karena terlalu banyak multitasking aplikasi belajar"
+    },
+    {
+      "id": "RES-012",
+      "name": "Luqman Hakim",
+      "post_date": "2026-10-22 09:25:00",
+      "kalkulasi": 2.7,
+      "kategori": "Stress sedang",
+      "essay_1": "Terkadang aplikasi keluar sendiri saat mengunggah video tugas sekolah yang ukurannya agak besar",
+      "essay_2": "Secara umum masih bisa diatasi dan belajar tetap bisa berjalan walau sesekali jengkel"
+    },
+    {
+      "id": "RES-013",
+      "name": "Maya Anggraini",
+      "post_date": "2026-10-22 09:30:00",
+      "kalkulasi": 1.3,
+      "kategori": "Stress rendah",
+      "essay_1": "Aplikasi sangat responsif, hemat kuota dan tampilannya sederhana sehingga mudah dipahami",
+      "essay_2": "Sangat puas dan merasa belajar lebih santai tanpa perlu ribet mengurus berkas fisik"
+    },
+    {
+      "id": "RES-014",
+      "name": "Naufal Rasyid",
+      "post_date": "2026-10-22 09:35:00",
+      "kalkulasi": 4.2,
+      "kategori": "Stress tinggi",
+      "essay_1": "Sistem dan kurikulum digital sering update mendadak, cara input tugas selalu berubah-ubah",
+      "essay_2": "Bikin bingung dan frustrasi karena baru saja terbiasa dengan menu lama sudah diganti lagi"
+    },
+    {
+      "id": "RES-015",
+      "name": "Olivia Putri",
+      "post_date": "2026-10-22 09:40:00",
+      "kalkulasi": 1.3,
+      "kategori": "Stress rendah",
+      "essay_1": "Semua fitur berjalan lancar, video pembelajaran mudah diunduh dan tidak ada lag",
+      "essay_2": "Belajar di rumah jadi menyenangkan karena materi bisa diulang-ulang kapan saja dengan tenang"
+    },
+    {
+      "id": "RES-016",
+      "name": "Panji Gemilang",
+      "post_date": "2026-10-22 09:45:00",
+      "kalkulasi": 4.5,
+      "kategori": "Stress tinggi",
+      "essay_1": "Tumpukan tugas dari pagi sampai sore ditambah sistem yang lemot membuat emosi meluap",
+      "essay_2": "Sangat lelah fisik dan mental, badan pegal dan stres dikejar deadline tugas yang padat"
+    },
+    {
+      "id": "RES-017",
+      "name": "Qori Annisa",
+      "post_date": "2026-10-22 09:50:00",
+      "kalkulasi": 2.7,
+      "kategori": "Stress sedang",
+      "essay_1": "Beban belajar cukup lumayan, kadang pusing kalau terlalu lama menatap layar komputer",
+      "essay_2": "Kenyamanan belajar standar saja, tergantung pada banyak atau tidaknya tugas hari itu"
+    },
+    {
+      "id": "RES-018",
+      "name": "Rizky Ramadhan",
+      "post_date": "2026-10-22 09:55:00",
+      "kalkulasi": 1.3,
+      "kategori": "Stress rendah",
+      "essay_1": "Aplikasi presensi dan pengumpulan tugas sangat cepat serta tidak pernah bermasalah",
+      "essay_2": "Komunikasi dengan guru berjalan lancar dan pengumpulan tugas sangat efektif"
+    },
+    {
+      "id": "RES-019",
+      "name": "Siti Nurhaliza",
+      "post_date": "2026-10-22 10:00:00",
+      "kalkulasi": 4.4,
+      "kategori": "Stress tinggi",
+      "essay_1": "Banjir notifikasi dari guru dan teman di malam hari membuat waktu tidur dan istirahat berantakan",
+      "essay_2": "Merasa tidak punya waktu istirahat yang tenang karena selalu kepikiran tugas belum selesai"
+    },
+    {
+      "id": "RES-020",
+      "name": "Taufik Hidayat",
+      "post_date": "2026-10-22 10:05:00",
+      "kalkulasi": 1.7,
+      "kategori": "Stress rendah",
+      "essay_1": "Aplikasi berjalan baik, antarmukanya ramah untuk siswa dan tidak menyulitkan pemula",
+      "essay_2": "Cukup membantu menyelesaikan tugas tepat waktu dan materi sekolah gampang dicari"
+    },
+    {
+      "id": "RES-021",
+      "name": "Ulfa Hasanah",
+      "post_date": "2026-10-22 10:10:00",
+      "kalkulasi": 4.1,
+      "kategori": "Stress tinggi",
+      "essay_1": "Fitur ujian daring sering ngelag dan error saat klik submit, panik sekali nilainya hilang",
+      "essay_2": "Pusing dan cemas setiap menghadapi ujian berbasis aplikasi digital sekolah ini"
+    },
+    {
+      "id": "RES-022",
+      "name": "Vina Panduwinata",
+      "post_date": "2026-10-22 10:15:00",
+      "kalkulasi": 2.8,
+      "kategori": "Stress sedang",
+      "essay_1": "Kendala utama ada pada koneksi internet rumah, tapi sistem aplikasinya sendiri lumayan baik",
+      "essay_2": "Pengaruhnya cukup seimbang, ada kemudahan tapi juga butuh adaptasi waktu pemakaian hp"
+    },
+    {
+      "id": "RES-023",
+      "name": "Wahyu Hidayat",
+      "post_date": "2026-10-22 10:20:00",
+      "kalkulasi": 1.2,
+      "kategori": "Stress rendah",
+      "essay_1": "Sangat puas dengan sistem ini, ringan dibuka di hp jadul dan tidak makan banyak kuota",
+      "essay_2": "Belajar mandiri jadi lebih teratur, nyaman dan tidak merasa tertekan sama sekali"
+    },
+    {
+      "id": "RES-024",
+      "name": "Yoga Pratama",
+      "post_date": "2026-10-22 10:25:00",
+      "kalkulasi": 4.5,
+      "kategori": "Stress tinggi",
+      "essay_1": "Tuntutan harus multitasking buka aplikasi zoom sambil ketik tugas bikin laptop hang dan lemot parah",
+      "essay_2": "Sangat stres dan pusing karena tugas sering hilang saat laptop mendadak mati"
+    },
+    {
+      "id": "RES-025",
+      "name": "Zahra Amelia",
+      "post_date": "2026-10-22 10:30:00",
+      "kalkulasi": 1.4,
+      "kategori": "Stress rendah",
+      "essay_1": "Sistem pembelajaran sangat membantu saya memahami pelajaran yang tertinggal dengan cepat",
+      "essay_2": "Suasana belajar jadi lebih menyenangkan dan tidak ada rasa khawatir ketinggalan materi"
+    }
+  ]
+}
