@@ -6,7 +6,8 @@ import numpy as np
 class HybridStressClassifier:
     """
     Classifier hybrid untuk mendeteksi tingkat Technostress:
-    1. Mode Utama (Likert): Menggunakan rata-rata skor kuisioner Likert (1 - 5).
+    1. Mode Utama (Likert): Menggunakan rata-rata skor kuisioner Likert dinamis (1.00 - 5.00)
+       dengan interpretasi berbasis pembulatan skala 1 sampai 5.
     2. Mode Fallback (NLP Inferred): Menggunakan analisis leksikon sentimen/stres pada teks esai.
     """
 
@@ -36,96 +37,96 @@ class HybridStressClassifier:
     def detect_likert_columns(self, df: pd.DataFrame) -> List[str]:
         """
         Mendeteksi secara otomatis apakah DataFrame memiliki kolom skala Likert atau rating.
-        Pola: 'likert', 'q1', 'q2', 'skor', 'rating', 'bintang', 'star'.
+        Pola: 'likert', 'q1', 'q2', 'skor', 'rating', 'bintang', 'star', 'pertanyaan_'.
         """
         likert_cols = []
         pattern = re.compile(r"(likert|soal_|pertanyaan_|skor_|score_|rating|star|bintang|^q\d+)", re.IGNORECASE)
         
         for col in df.columns:
             if pattern.search(col):
-                # Pastikan kolom bertipe numerik
                 if pd.api.types.is_numeric_dtype(df[col]):
                     likert_cols.append(col)
         return likert_cols
 
-    def classify_by_likert(self, mean_score: float) -> Tuple[str, float]:
+    def classify_by_likert(self, mean_score: float) -> Tuple[str, float, int]:
         """
-        Mengelompokkan tingkat stres berdasarkan rata-rata skor Likert (skala 1 - 5).
-        - Rendah: < 2.5
-        - Sedang: 2.5 s/d < 3.6
-        - Tinggi: >= 3.6
+        Mengelompokkan tingkat stres berdasarkan rata-rata skor Likert:
+        - Perhitungan: Rata-rata desimal presisi (misal 4.30).
+        - Skala Pembulatan Interpretasi:
+          * Nilai >= 3.50 -> Dibulatkan ke Skala 4 atau 5 = "Tinggi"
+          * Nilai 2.50 s/d < 3.50 -> Dibulatkan ke Skala 3 = "Sedang"
+          * Nilai < 2.50 -> Dibulatkan ke Skala 1 atau 2 = "Rendah"
         """
         if pd.isna(mean_score):
-            return "Sedang", 3.0
-            
-        if mean_score >= 3.6:
-            return "Tinggi", float(mean_score)
-        elif mean_score >= 2.5:
-            return "Sedang", float(mean_score)
-        else:
-            return "Rendah", float(mean_score)
+            return "Sedang", 3.0, 3
 
-    def classify_by_text(self, text: str) -> Tuple[str, float, Dict[str, float]]:
+        mean_val = float(mean_score)
+        rounded_scale = int(max(1, min(5, round(mean_val))))
+
+        if mean_val >= 3.50:
+            return "Tinggi", mean_val, rounded_scale
+        elif mean_val >= 2.50:
+            return "Sedang", mean_val, 3
+        else:
+            return "Rendah", mean_val, rounded_scale
+
+    def classify_by_text(self, text: str) -> Tuple[str, float, int, Dict[str, float]]:
         """
         Fallback: Mengelompokkan tingkat stres menggunakan leksikon NLP pada teks esai.
-        Menghasilkan skor stress_index (1.0 s/d 5.0) agar setara skala Likert.
+        Menghasilkan skor stress_index (1.00 s/d 5.00) agar setara skala Likert.
         """
         if not text or not isinstance(text, str):
-            return "Sedang", 3.0, {"high_stress_score": 0.0, "low_stress_score": 0.0}
+            return "Sedang", 3.0, 3, {"high_stress_score": 0.0, "low_stress_score": 0.0}
 
         words = text.lower().split()
         high_score = 0.0
         low_score = 0.0
 
         for w in words:
-            # Hilangkan tanda baca sederhana
             w_clean = re.sub(r"[^a-zA-Z]", "", w)
             if w_clean in self.high_stress_lexicon:
                 high_score += self.high_stress_lexicon[w_clean]
             if w_clean in self.low_stress_lexicon:
                 low_score += self.low_stress_lexicon[w_clean]
 
-        # Kalkulasi index ekuivalen Likert (1 - 5)
-        # Baseline = 3.0 (Netral)
         net_stress = high_score - low_score
         
         if net_stress > 0:
-            # Cenderung stres tinggi (naik dari 3.0 menuju 5.0)
             inferred_score = min(5.0, 3.0 + (net_stress * 0.5))
         elif net_stress < 0:
-            # Cenderung stres rendah (turun dari 3.0 menuju 1.0)
             inferred_score = max(1.0, 3.0 + (net_stress * 0.5))
         else:
             inferred_score = 3.0
 
-        level, _ = self.classify_by_likert(inferred_score)
-        return level, round(inferred_score, 2), {"high_stress_score": high_score, "low_stress_score": low_score}
+        level, score, rounded_scale = self.classify_by_likert(inferred_score)
+        return level, round(score, 2), rounded_scale, {"high_stress_score": high_score, "low_stress_score": low_score}
 
     def process_row(self, row: pd.Series, likert_cols: List[str], text_col: str) -> Dict[str, Any]:
         """
         Memproses satu baris data, memilih mode Likert jika ada, atau fallback ke NLP.
+        Menyimpan stress_score (desimal asli) dan rounded_scale (angka bulat interpretasi 1-5).
         """
         text_val = str(row[text_col]) if text_col in row and pd.notna(row[text_col]) else ""
         
         if likert_cols:
-            # Mode Likert
             scores = [row[c] for c in likert_cols if pd.notna(row[c])]
             if scores:
                 mean_likert = float(np.mean(scores))
-                level, score = self.classify_by_likert(mean_likert)
+                level, score, rounded_scale = self.classify_by_likert(mean_likert)
                 return {
                     "stress_level": level,
                     "stress_score": round(score, 2),
+                    "rounded_scale": rounded_scale,
                     "source_mode": "LIKERT",
                     "text": text_val
                 }
 
         # Fallback ke NLP Mode
-        level, score, details = self.classify_by_text(text_val)
+        level, score, rounded_scale, details = self.classify_by_text(text_val)
         return {
             "stress_level": level,
             "stress_score": score,
+            "rounded_scale": rounded_scale,
             "source_mode": "NLP_INFERRED",
             "text": text_val
         }
-

@@ -108,7 +108,7 @@ st.markdown("""
         🧠 Technostress Comparative Word Cloud
     </h1>
     <p style="font-size: 1.05rem; color: #94a3b8; margin: 0; max-width: 850px;">
-        Platform analitik teks dan visualisasi komparatif pemicu stres teknologi. Didukung pemodelan <b>Fallback Hybrid</b> (Otomatis mendeteksi kuisioner berskala Likert atau mengekstrak leksikon sentimen teks bebas).
+        Platform analitik teks dan visualisasi komparatif pemicu stres teknologi. Didukung pemodelan <b>Fallback Hybrid</b> (Otomatis mendeteksi kuisioner berskala Likert 1–10 butir atau mengekstrak leksikon sentimen teks bebas).
     </p>
 </div>
 """, unsafe_allow_html=True)
@@ -160,7 +160,7 @@ if data_source == "🧪 Demo Instan (1-Click)":
     demo_type = st.sidebar.radio(
         "Pilih Skenario Demo:",
         [
-            "📋 Skenario 1: Kuisioner Lengkap (Likert + Esai)",
+            "📋 Skenario 1: Kuisioner Lengkap (25 Siswa, 10 Likert, 2 Esai)",
             "🌐 Skenario 2: Ulasan Terbuka (Fallback NLP - Tanpa Likert)"
         ]
     )
@@ -179,7 +179,7 @@ elif data_source == "📁 Upload CSV (Batch)":
     if uploaded_file is not None:
         try:
             raw_df = pd.read_csv(uploaded_file)
-            st.sidebar.success(f"File `{uploaded_file.name}` dimuat!")
+            st.sidebar.success(f"File `{uploaded_file.name}` dimuat ({len(raw_df)} baris)!")
         except Exception as e:
             st.sidebar.error(f"Gagal membaca CSV: {e}")
 
@@ -188,16 +188,26 @@ elif data_source == "⚡ Realtime JSON (Payload)":
     default_json = """[
   {
     "respondent_id": "REALTIME-001",
-    "likert_scores": {"q1_overload": 5, "q2_invasion": 4, "q3_complexity": 5},
-    "essay": "Notifikasi tugas masuk tengah malam dan aplikasi lemot sekali bikin lelah dan pusing"
+    "nama_siswa": "Rian Ardiansyah",
+    "likert_scores": {
+      "pertanyaan_1": 5, "pertanyaan_2": 5, "pertanyaan_3": 4, "pertanyaan_4": 4, "pertanyaan_5": 5,
+      "pertanyaan_6": 4, "pertanyaan_7": 4, "pertanyaan_8": 5, "pertanyaan_9": 4, "pertanyaan_10": 4
+    },
+    "pertanyaan_essay_1": "Notifikasi tugas masuk tengah malam dan aplikasi lemot sekali bikin lelah dan pusing",
+    "pertanyaan_essay_2": "Waktu tidur jadi tidak tenang dan selalu cemas ketinggalan tugas"
   },
   {
     "respondent_id": "REALTIME-002",
-    "likert_scores": {"q1_overload": 1, "q2_invasion": 1, "q3_complexity": 2},
-    "essay": "Sistem sangat lancar, mudah dan cepat menyelesaikan semua urusan laporan kerja"
+    "nama_siswa": "Dina Marlina",
+    "likert_scores": {
+      "pertanyaan_1": 1, "pertanyaan_2": 2, "pertanyaan_3": 1, "pertanyaan_4": 1, "pertanyaan_5": 2,
+      "pertanyaan_6": 1, "pertanyaan_7": 1, "pertanyaan_8": 2, "pertanyaan_9": 1, "pertanyaan_10": 1
+    },
+    "pertanyaan_essay_1": "Aplikasi belajar sangat lancar, mudah dan cepat menyelesaikan semua urusan laporan kerja",
+    "pertanyaan_essay_2": "Sangat membantu dan membuat proses belajar mandiri lebih menyenangkan"
   }
 ]"""
-    json_text = st.text_area("JSON Array / Object:", value=default_json, height=160)
+    json_text = st.text_area("JSON Array / Object:", value=default_json, height=180)
     if st.button("🚀 Analisis Payload Sekarang", type="primary"):
         try:
             payload = json.loads(json_text)
@@ -205,10 +215,36 @@ elif data_source == "⚡ Realtime JSON (Payload)":
         except Exception as e:
             st.error(f"Gagal memproses JSON: {e}")
 
+# --- FILTER FOKUS ESAI (JIKA TERDAPAT MULTI-KOLOM ESAI) ---
+selected_essay_focus = None
+if raw_df is not None:
+    detected_essays = pipeline.find_essay_columns(raw_df)
+    if len(detected_essays) > 1:
+        st.sidebar.markdown("---")
+        st.sidebar.markdown("### 📝 Fokus Analisis Esai")
+        essay_options = ["ALL_COMBINED"] + detected_essays
+        def format_essay_choice(x):
+            if x == "ALL_COMBINED":
+                return f"🔀 Semua Esai Gabungan ({len(detected_essays)} Kolom)"
+            elif "1" in x:
+                return f"1️⃣ {x} (Kendala & Stres)"
+            elif "2" in x:
+                return f"2️⃣ {x} (Pengaruh & Kenyamanan)"
+            return f"📄 {x}"
+        selected_essay_focus = st.sidebar.selectbox(
+            "Pilih Kolom Esai untuk Word Cloud:",
+            essay_options,
+            format_func=format_essay_choice
+        )
+
 # --- PROSES ANALISIS JIKA DATA TERSEDIA ---
 if raw_df is not None:
     with st.spinner("Menjalankan pipeline NLP & Hybrid Classifier..."):
-        analysis_res = pipeline.process_dataframe(raw_df, ngram_mode=ngram_choice)
+        analysis_res = pipeline.process_dataframe(
+            raw_df,
+            text_col=selected_essay_focus,
+            ngram_mode=ngram_choice
+        )
 
 # --- TAMPILAN DASHBOARD UTAMA ---
 if "analysis_res" in locals() and "error" not in analysis_res:
@@ -223,8 +259,8 @@ if "analysis_res" in locals() and "error" not in analysis_res:
             <span>🟢</span>
             <div>
                 <b>Mode Aktif: Skala Likert Terdeteksi (Kuantitatif Akurat)</b> &mdash; 
-                Dihitung dari {len(summary['likert_columns_detected'])} kolom kuisioner: 
-                <code>{', '.join(summary['likert_columns_detected'])}</code> | Kolom Teks: <code>{summary['text_column_used']}</code>
+                Dihitung dari <b>{len(summary['likert_columns_detected'])} butir pertanyaan Likert</b>: 
+                <code>{', '.join(summary['likert_columns_detected'][:5])}...</code> | Sumber Teks: <code>{summary['text_column_used']}</code>
             </div>
         </div>
         """, unsafe_allow_html=True)
@@ -234,7 +270,7 @@ if "analysis_res" in locals() and "error" not in analysis_res:
             <span>🟡</span>
             <div>
                 <b>Mode Aktif: Fallback NLP Inferred (Estimasi Leksikon Teks Otomatis)</b> &mdash; 
-                <i>Dataset tidak memiliki kolom skala Likert numerik.</i> Sistem mengevaluasi sentimen & indikator stres langsung dari teks esai. Kolom Teks: <code>{summary['text_column_used']}</code>
+                <i>Dataset tidak memiliki kolom skala Likert numerik.</i> Sistem mengevaluasi sentimen & indikator stres langsung dari teks esai. Sumber Teks: <code>{summary['text_column_used']}</code>
             </div>
         </div>
         """, unsafe_allow_html=True)
@@ -300,17 +336,17 @@ if "analysis_res" in locals() and "error" not in analysis_res:
     st.markdown("<div style='height: 25px;'></div>", unsafe_allow_html=True)
 
     # 3. Visual Tabs
-    tab_wc, tab_phrases, tab_dims, tab_data = st.tabs([
+    tab_wc, tab_phrases, tab_chart, tab_data = st.tabs([
         "🎨 Word Cloud Komparatif",
         "📊 Peringkat Top Frasa (Bigram)",
-        "🧩 Dimensi Technostress",
+        "📈 Grafik Tingkat Stres Siswa",
         "📋 Data Responden & Ekspor"
     ])
 
     # --- TAB 1: WORD CLOUD KOMPARATIF ---
     with tab_wc:
         st.markdown("#### 🔄 Visualisasi Komparatif Berdampingan")
-        st.caption("Membandingkan secara visual kata/frasa dominan antara kelompok yang mengalami stres tinggi terhadap kelompok yang puas/stres rendah.")
+        st.caption(f"Menampilkan visualisasi kata/frasa dominan berdasarkan teks: **{summary['text_column_used']}**.")
 
         col_w1, col_w2 = st.columns(2)
 
@@ -324,7 +360,7 @@ if "analysis_res" in locals() and "error" not in analysis_res:
         with col_w1:
             st.markdown("""
             <div style="background: rgba(239, 68, 68, 0.08); border-left: 4px solid #ef4444; padding: 8px 14px; border-radius: 4px 8px 8px 4px; margin-bottom: 12px;">
-                <b style="color: #ef4444;">🔴 Kelompok Technostress Tinggi (Keluhan & Frustrasi)</b>
+                <b style="color: #ef4444;">🔴 Kelompok Technostress Tinggi (Keluhan & Frustrasi Siswa)</b>
             </div>
             """, unsafe_allow_html=True)
             if img_high:
@@ -338,7 +374,7 @@ if "analysis_res" in locals() and "error" not in analysis_res:
         with col_w2:
             st.markdown("""
             <div style="background: rgba(16, 185, 129, 0.08); border-left: 4px solid #10b981; padding: 8px 14px; border-radius: 4px 8px 8px 4px; margin-bottom: 12px;">
-                <b style="color: #10b981;">🟢 Kelompok Technostress Rendah (Kepuasan & Kemudahan)</b>
+                <b style="color: #10b981;">🟢 Kelompok Technostress Rendah (Kepuasan & Kemudahan Belajar)</b>
             </div>
             """, unsafe_allow_html=True)
             if img_low:
@@ -358,7 +394,7 @@ if "analysis_res" in locals() and "error" not in analysis_res:
     # --- TAB 2: TOP FRASA ALTAIR CHARTS ---
     with tab_phrases:
         st.markdown("#### 📊 Peringkat Top Frasa & Kata Kunci")
-        st.caption("Distribusi frekuensi frasa 2 kata (Bigram) atau unigram yang paling sering diutarakan responden.")
+        st.caption("Distribusi frekuensi frasa 2 kata (Bigram) atau kata tunggal yang paling sering diutarakan responden.")
 
         col_p1, col_p2 = st.columns(2)
 
@@ -391,65 +427,149 @@ if "analysis_res" in locals() and "error" not in analysis_res:
             else:
                 st.write("Belum ada data.")
 
-    # --- TAB 3: DIMENSI TECHNOSTRESS ---
-    with tab_dims:
-        st.markdown("#### 🧩 Distribusi 5 Dimensi Technostress")
-        st.caption("Pemetaan keluhan berdasarkan kerangka teoritis Technostress (Tarafdar et al., 2007).")
+    # --- TAB 3: GRAFIK TINGKAT STRES SISWA ---
+    with tab_chart:
+        st.markdown("#### 📈 Grafik Tingkat Technostress Setiap Siswa")
+        st.caption("Visualisasi perbandingan skor stres individual yang dikelompokkan ke dalam kategori Tinggi (Merah: Skala 4–5), Sedang (Biru: Skala 3), dan Rendah (Hijau: Skala 1–2). Garis batas merah berada pada nilai 3.50 (pembulatan ke skala 4) dan hijau pada nilai 2.50 (pembulatan ke skala 3).")
 
-        all_dims = []
-        for dims in processed_df["dimensions"]:
-            all_dims.extend(dims)
-        dim_series = pd.Series(all_dims).value_counts().reset_index()
-        dim_series.columns = ["Dimensi", "Frekuensi"]
+        # Buat dataframe khusus visualisasi grafik
+        chart_df = processed_df.copy()
+        if "nama_siswa" in chart_df.columns:
+            chart_df["Label Siswa"] = chart_df["nama_siswa"] + " (" + chart_df["respondent_id"] + ")"
+        else:
+            chart_df["Label Siswa"] = chart_df["respondent_id"]
 
-        chart_dim = alt.Chart(dim_series).mark_bar(cornerRadiusTopRight=6, cornerRadiusBottomRight=6).encode(
-            x=alt.X('Frekuensi:Q', title="Jumlah Kemunculan dalam Esai"),
-            y=alt.Y('Dimensi:N', sort='-x', title=None),
-            color=alt.Color('Dimensi:N', scale=alt.Scale(scheme='tableau10'), legend=None),
-            tooltip=['Dimensi', 'Frekuensi']
-        ).properties(height=280)
+        chart_df["Skor Rata-rata"] = chart_df["stress_score"]
+        chart_df["Skala Bulat"] = chart_df.get("rounded_scale", chart_df["stress_score"].round().astype(int))
+        chart_df["Tingkat Stres"] = chart_df["stress_level"]
 
-        st.altair_chart(chart_dim, use_container_width=True)
+        # Kontrol Pengurutan & Filter
+        col_c1, col_c2 = st.columns([2, 2])
+        with col_c1:
+            sort_order = st.selectbox(
+                "Urutkan Grafik Berdasarkan:",
+                ["Skor Tertinggi ke Terendah", "Skor Terendah ke Tertinggi", "Berdasarkan Nama Siswa"]
+            )
+        with col_c2:
+            filter_chart_level = st.multiselect(
+                "Filter Kategori di Grafik:",
+                options=["Tinggi", "Sedang", "Rendah"],
+                default=["Tinggi", "Sedang", "Rendah"]
+            )
 
-        col_d1, col_d2, col_d3 = st.columns(3)
-        with col_d1:
-            st.info("**Techno-Overload**: Beban kerja berlebih, multitasking, dan kebanjiran tugas.")
-        with col_d2:
-            st.info("**Techno-Invasion**: Terhubung terus-menerus, diganggu saat libur/malam hari.")
-        with col_d3:
-            st.info("**Techno-Complexity**: Sistem membingungkan, error, dan minimnya pelatihan.")
+        chart_df_filtered = chart_df[chart_df["Tingkat Stres"].isin(filter_chart_level)]
+
+        if not chart_df_filtered.empty:
+            if sort_order == "Skor Tertinggi ke Terendah":
+                sort_arg = alt.EncodingSortField(field="Skor Rata-rata", order="descending")
+            elif sort_order == "Skor Terendah ke Tertinggi":
+                sort_arg = alt.EncodingSortField(field="Skor Rata-rata", order="ascending")
+            else:
+                sort_arg = alt.EncodingSortField(field="Label Siswa", order="ascending")
+
+            bars = alt.Chart(chart_df_filtered).mark_bar(cornerRadiusTopRight=6, cornerRadiusBottomRight=6).encode(
+                x=alt.X('Skor Rata-rata:Q', scale=alt.Scale(domain=[0, 5.2]), title="Skor Rata-rata Likert (1.00 - 5.00)"),
+                y=alt.Y('Label Siswa:N', sort=sort_arg, title=None),
+                color=alt.Color(
+                    'Tingkat Stres:N',
+                    scale=alt.Scale(
+                        domain=['Tinggi', 'Sedang', 'Rendah'],
+                        range=['#ef4444', '#3b82f6', '#10b981']
+                    ),
+                    legend=alt.Legend(title="Kategori", orient="top")
+                ),
+                tooltip=['Label Siswa', 'Tingkat Stres', 'Skor Rata-rata', 'Skala Bulat', 'source_mode']
+            )
+
+            # Garis batas referensi pembulatan skala (Threshold Lines: 3.50 dan 2.50)
+            rule_high = alt.Chart(pd.DataFrame({'x': [3.50]})).mark_rule(
+                color='#ef4444', strokeDash=[4, 4], size=1.5
+            ).encode(x='x:Q')
+
+            rule_low = alt.Chart(pd.DataFrame({'x': [2.50]})).mark_rule(
+                color='#10b981', strokeDash=[4, 4], size=1.5
+            ).encode(x='x:Q')
+
+            chart_height = max(350, len(chart_df_filtered) * 22)
+            final_chart = (bars + rule_high + rule_low).properties(height=chart_height)
+            st.altair_chart(final_chart, use_container_width=True)
+
+            st.markdown("---")
+            st.markdown("##### 👥 Daftar Nama Siswa per Kategori Interpretasi Pembulatan")
+            sc1, sc2, sc3 = st.columns(3)
+            with sc1:
+                st.markdown("<b style='color: #ef4444;'>🔴 Stres Tinggi (Skala 4–5 | Rata-rata $\ge$ 3.50):</b>", unsafe_allow_html=True)
+                high_names = chart_df[chart_df["Tingkat Stres"] == "Tinggi"]["Label Siswa"].tolist()
+                for name in high_names:
+                    st.markdown(f"- {name}")
+            with sc2:
+                st.markdown("<b style='color: #3b82f6;'>🔵 Stres Sedang (Skala 3 | Rata-rata 2.50 – 3.49):</b>", unsafe_allow_html=True)
+                med_names = chart_df[chart_df["Tingkat Stres"] == "Sedang"]["Label Siswa"].tolist()
+                for name in med_names:
+                    st.markdown(f"- {name}")
+            with sc3:
+                st.markdown("<b style='color: #10b981;'>🟢 Stres Rendah (Skala 1–2 | Rata-rata < 2.50):</b>", unsafe_allow_html=True)
+                low_names = chart_df[chart_df["Tingkat Stres"] == "Rendah"]["Label Siswa"].tolist()
+                for name in low_names:
+                    st.markdown(f"- {name}")
+        else:
+            st.warning("Tidak ada data untuk kategori yang difilter.")
 
     # --- TAB 4: DATA RESPONDEN & EKSPOR ---
     with tab_data:
-        st.markdown("#### 📋 Data Responden Teranalisis")
+        st.markdown("#### 📋 Data Responden Siswa & Hasil Klasifikasi")
         
         # Filter interaktif
-        filter_level = st.multiselect(
-            "Filter Tingkat Stres:",
-            options=["Tinggi", "Sedang", "Rendah"],
-            default=["Tinggi", "Sedang", "Rendah"]
-        )
+        col_f1, col_f2 = st.columns(2)
+        with col_f1:
+            filter_level = st.multiselect(
+                "Filter Tingkat Stres:",
+                options=["Tinggi", "Sedang", "Rendah"],
+                default=["Tinggi", "Sedang", "Rendah"]
+            )
+        with col_f2:
+            search_query = st.text_input("🔍 Cari Berdasarkan Nama Siswa / ID:", placeholder="Ketik nama atau ID...")
 
-        display_df = processed_df[processed_df["stress_level"].isin(filter_level)][
-            ["stress_level", "stress_score", "source_mode", "dimensions", "text"]
-        ].copy()
-
-        display_df.rename(columns={
+        # Persiapan kolom tampilan
+        cols_to_display = []
+        rename_map = {
+            "respondent_id": "ID",
+            "nama_siswa": "Nama Siswa",
             "stress_level": "Level Stres",
-            "stress_score": "Skor (1-5)",
+            "rounded_scale": "Skala Bulat (1-5)",
+            "stress_score": "Rata-rata Skor (Desimal)",
             "source_mode": "Sumber Penentuan",
-            "dimensions": "Dimensi Terdeteksi",
-            "text": "Teks Esai Responden"
-        }, inplace=True)
+            "dimensions": "Dimensi Terdeteksi"
+        }
 
-        st.dataframe(display_df, use_container_width=True, height=360)
+        for c in ["respondent_id", "nama_siswa", "stress_level", "rounded_scale", "stress_score", "source_mode", "dimensions"]:
+            if c in processed_df.columns:
+                cols_to_display.append(c)
+
+        for ec in summary.get("essay_columns_detected", []):
+            if ec in processed_df.columns:
+                cols_to_display.append(ec)
+                rename_map[ec] = "Pertanyaan Esai 1 (Kendala)" if "1" in ec else ("Pertanyaan Esai 2 (Pengaruh)" if "2" in ec else ec)
+
+        filtered_df = processed_df[processed_df["stress_level"].isin(filter_level)].copy()
+
+        if search_query:
+            mask = filtered_df["respondent_id"].astype(str).str.contains(search_query, case=False, na=False)
+            if "nama_siswa" in filtered_df.columns:
+                mask = mask | filtered_df["nama_siswa"].astype(str).str.contains(search_query, case=False, na=False)
+            filtered_df = filtered_df[mask]
+
+        display_df = filtered_df[cols_to_display].copy()
+        display_df.rename(columns=rename_map, inplace=True)
+
+        st.dataframe(display_df, use_container_width=True, height=400)
 
         # Download CSV hasil analisis
         csv_data = display_df.to_csv(index=False).encode('utf-8')
         st.download_button(
             label="📥 Unduh Hasil Analisis Lengkap (CSV)",
             data=csv_data,
-            file_name="hasil_analisis_technostress.csv",
+            file_name="hasil_analisis_technostress_siswa.csv",
             mime="text/csv",
             type="primary"
         )
