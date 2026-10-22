@@ -198,15 +198,14 @@ if json_data is not None:
             *Pastikan endpoint API kelompok penyedia data menyertakan kolom identitas (`id`, `name`), `post_date`, `kalkulasi`, dan `kategori`.*
             """)
         else:
-            # Metric Cards
+            # Metric Cards (4 Kolom Utama)
             total = summary["total_records"]
             counts = summary["stress_counts"]
             high_count = counts.get("Tinggi", 0)
             med_count = counts.get("Sedang", 0)
             low_count = counts.get("Rendah", 0)
-            avg_score = summary["average_score"]
 
-            mc1, mc2, mc3, mc4, mc5 = st.columns(5)
+            mc1, mc2, mc3, mc4 = st.columns(4)
             with mc1:
                 st.markdown(f"""
                 <div class="metric-card">
@@ -240,14 +239,6 @@ if json_data is not None:
                     <div class="metric-title">Stres Rendah</div>
                     <div class="metric-value" style="color: #10b981;">{low_count}</div>
                     <div class="metric-sub" style="color: #34d399;">{low_pct}% (Skala 1–2)</div>
-                </div>
-                """, unsafe_allow_html=True)
-            with mc5:
-                st.markdown(f"""
-                <div class="metric-card">
-                    <div class="metric-title">Rata-rata Skor</div>
-                    <div class="metric-value" style="color: #f59e0b;">{avg_score} <span style="font-size: 0.9rem; color: #94a3b8;">/ 5.0</span></div>
-                    <div class="metric-sub">Indeks Stres Global</div>
                 </div>
                 """, unsafe_allow_html=True)
 
