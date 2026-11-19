@@ -3,3 +3,7 @@ pandas
 numpy
 scikit-learn
 plotly
+fastapi
+uvicorn
+python-multipart
+openpyxl
