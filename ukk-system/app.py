@@ -1,104 +1,35 @@
 import re
 
-import numpy as np
 import pandas as pd
 import plotly.express as px
 import streamlit as st
 
+from analyzer import (
+    KATEGORI,
+    POLA_TAHUN,
+    WARNA,
+    baca_tabel,
+    bersihkan_dan_kategorikan,
+    cari_kolom,
+    data_contoh as _data_contoh,
+    hitung_ringkasan,
+    kolom_bucket,
+    susun_data,
+)
+
 st.set_page_config(page_title="Tren Ujian Kompetensi SMK", layout="wide")
 
-# ---------- Rubrik ----------
-KATEGORI = ["Belum Kompeten", "Cukup Kompeten", "Kompeten", "Sangat Kompeten"]
-WARNA = {
-    "Belum Kompeten": "#d62728",
-    "Cukup Kompeten": "#ff9f1c",
-    "Kompeten": "#2ca02c",
-    "Sangat Kompeten": "#1f77b4",
-}
-BUCKET_NORM = {"91-100", "75-90", "61-74", "<60", "<61"}
 
-
-def konversi(nilai: float) -> str:
-    if nilai >= 91:
-        return "Sangat Kompeten"
-    if nilai >= 75:
-        return "Kompeten"
-    if nilai >= 61:
-        return "Cukup Kompeten"
-    return "Belum Kompeten"
-
-
-# ---------- Helper baca & olah data ----------
+# ---------- Helper baca & olah data (cached Streamlit) ----------
 @st.cache_data
 def baca_file(file, header_row: int) -> pd.DataFrame:
     """header_row = -1 -> cari baris header otomatis (memuat 'nilai', 'nama', atau rentang nilai)."""
-    if file.name.lower().endswith((".xlsx", ".xls")):
-        mentah = pd.read_excel(file, header=None)
-    else:
-        mentah = pd.read_csv(file, header=None)
-    if header_row < 0:
-        header_row = 0
-        for i in range(min(len(mentah), 15)):
-            isi = [str(v).strip().lower() for v in mentah.iloc[i].tolist()]
-            if any("nilai" in v or "nama" in v or v.replace(" ", "") in BUCKET_NORM for v in isi):
-                header_row = i
-                break
-    df = mentah.iloc[header_row + 1:].copy()
-    df.columns = [str(c).strip() for c in mentah.iloc[header_row].tolist()]
-    df = df.dropna(how="all").dropna(axis=1, how="all").reset_index(drop=True)
-    return df
-
-
-def cari_kolom(cols, kata):
-    for c in cols:
-        if kata in c.lower():
-            return c
-    return None
-
-
-def kolom_bucket(cols):
-    return [c for c in cols if c.replace(" ", "") in BUCKET_NORM]
-
-
-def ke_angka(seri):
-    """Ubah ke angka; aman untuk teks seperti '85,5' atau ' 85 '."""
-    return pd.to_numeric(seri.astype(str).str.strip().str.replace(",", ".", regex=False), errors="coerce")
-
-
-POLA_TAHUN = r"(?<!\d)((?:19|20)\d{2})(?!\d)"
-
-
-def ekstrak_tahun(seri):
-    """Ambil angka tahun 4 digit dari kolom (mis. 'Kamis, 16 April 2026' atau 2024-04-16)."""
-    return pd.to_numeric(seri.astype(str).str.extract(POLA_TAHUN)[0], errors="coerce")
-
-
-def susun_data(df, nama_file, tahun_src, tahun_manual, mode, col_nilai, col_bucket, col_nama, col_paket):
-    if mode == "Satu kolom nilai":
-        nilai = ke_angka(df[col_nilai])
-    else:
-        nilai = df[col_bucket].apply(ke_angka).max(axis=1) if col_bucket else pd.Series(np.nan, index=df.index)
-    tahun = tahun_manual if tahun_src == "Isi manual" else ekstrak_tahun(df[tahun_src])
-    return pd.DataFrame(
-        {
-            "tahun": tahun,
-            "nama": df[col_nama] if col_nama else None,
-            "nilai": nilai,
-            "paket": df[col_paket] if col_paket else None,
-            "sumber": nama_file,
-        }
-    )
+    return baca_tabel(file, file.name, header_row=header_row)
 
 
 @st.cache_data
 def data_contoh() -> pd.DataFrame:
-    rng = np.random.default_rng(42)
-    rows = []
-    for tahun, mu in {2022: 70, 2024: 76, 2026: 80}.items():
-        for i, v in enumerate(np.clip(rng.normal(mu, 11, 200), 30, 100)):
-            rows.append({"tahun": tahun, "nama": f"Siswa {tahun}-{i}", "nilai": round(v, 1),
-                         "paket": f"Paket {i % 3 + 1}", "sumber": "contoh"})
-    return pd.DataFrame(rows)
+    return _data_contoh()
 
 
 # ---------- Sidebar: upload ----------
@@ -164,14 +95,10 @@ else:
     st.info("Belum ada file diupload, menampilkan data contoh. Upload file di sidebar untuk memakai datamu.")
     df = data_contoh()
 
-df = df.dropna(subset=["nilai", "tahun"])
-df = df[(df["nilai"] >= 0) & (df["nilai"] <= 100)].copy()
+df = bersihkan_dan_kategorikan(df)
 if df.empty:
     st.warning("Tidak ada nilai valid. Cek pengaturan tiap file di sidebar.")
     st.stop()
-df["tahun"] = df["tahun"].astype(int)
-df["tahun_str"] = df["tahun"].astype(str)
-df["kesimpulan"] = pd.Categorical(df["nilai"].apply(konversi), categories=KATEGORI, ordered=True)
 
 # ---------- Filter ----------
 with st.sidebar:
@@ -185,19 +112,7 @@ if df.empty:
 urut_tahun = [str(t) for t in sorted(df["tahun"].unique())]
 
 # ---------- Ringkasan per tahun ----------
-ringkas = (
-    df.groupby("tahun")
-    .agg(
-        jumlah=("nilai", "size"),
-        rata2=("nilai", "mean"),
-        median=("nilai", "median"),
-        minimum=("nilai", "min"),
-        maksimum=("nilai", "max"),
-        pct_kompeten=("nilai", lambda s: (s >= 75).mean() * 100),
-        pct_belum=("nilai", lambda s: (s < 61).mean() * 100),
-    )
-    .reset_index()
-)
+ringkas = hitung_ringkasan(df)
 
 st.subheader("Ringkasan")
 prev = None
